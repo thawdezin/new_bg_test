@@ -1,246 +1,158 @@
-import 'package:april/location/location_page.dart';
-import 'package:background_fetch/background_fetch.dart';
-import 'package:background_service_easy/background_service_easy.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:go_router/go_router.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:get/get.dart';
+import 'dart:convert';
 
-import 'Utils/permission_helper.dart';
-import 'firebase_options.dart';
-import 'location/notification_service.dart';
-import 'my_go_router.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 
-// [Android-only] This "Headless Task" is run when the Android app is terminated with `enableHeadless: true`
-// Be sure to annotate your callback function to avoid issues in release mode on Flutter >= 3.3.0
-@pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessTask task) async {
-  String taskId = task.taskId;
-  bool isTimeout = task.timeout;
-  uploadToFirestore(786, 969);
-  scheduleNotification("vm:entry-point");
-
-  if (isTimeout) {
-    // This task has exceeded its allowed running-time.
-    // You must stop what you're doing and immediately .finish(taskId)
-    print("⛑[BackgroundFetch] Headless task timed-out: $taskId");
-    uploadToFirestore(786, 969);
-    scheduleNotification("isTimeout");
-    BackgroundFetch.finish(taskId);
-    return;
-  }
-  print("⛑[BackgroundFetch] Headless event received: $taskId");
-
-  uploadToFirestore(786, 969);
-  scheduleNotification("After isTimeout");
-  // Do your work here...
-  BackgroundFetch.finish(taskId);
-}
-
-
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones();
-  requestLocationPermission();
-  await initializeNotifications();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // the constructor automatically set to foreground when initialized
-  BackgroundService(
-    onForeground: () {
-      // Callback when the service is set to the foreground.
-      uploadToFirestore(111, 111);
-      scheduleNotification("onForeground");
-    },
-    onBackground: () {
-      // Callback when the service is set to the background or app is closed.
-      uploadToFirestore(222, 222);
-      scheduleNotification("onBackground");
-    },
-    onStop: () {
-      // Callback when the service is stopped.
-      uploadToFirestore(333, 333);
-      scheduleNotification("onStop");
-    },
-  );
-
-  runApp(const MyApp());
-
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-
-  BackgroundFetch.configure(
-    BackgroundFetchConfig(
-      minimumFetchInterval: 1, // Fetch interval in seconds (3.5 minutes)
-      stopOnTerminate: false,
-      startOnBoot: true,
-      enableHeadless: true,
-    ),
-        (String taskId) async {
-      print("⛑ [BackgroundFetch] Event received: $taskId");
-      uploadToFirestore(786, 969);
-      scheduleNotification("Main");
-      BackgroundService.setToBackground();
-      // Run your background task here
-      BackgroundFetch.finish(taskId);
-    },
-  );
-
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  //const MyApp({super.key});
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-
-
-
-    return MaterialApp.router(
-      title: 'Flutter Demo',
+    return GetMaterialApp(
+      title: 'BackgroundGeolocation Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.amber,
       ),
-      routerConfig: router,
+      home: MyHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class HomeController extends GetxController {
+  var isMoving = false.obs;
+  var enabled = false.obs;
+  var motionActivity = 'UNKNOWN'.obs;
+  var odometer = '0'.obs;
+  var content = ''.obs;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  void onInit() {
+    super.onInit();
+    _initBackgroundGeolocation();
+  }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  void _initBackgroundGeolocation() async {
+    bg.BackgroundGeolocation.onLocation(_onLocation);
+    bg.BackgroundGeolocation.onMotionChange(_onMotionChange);
+    bg.BackgroundGeolocation.onActivityChange(_onActivityChange);
+    bg.BackgroundGeolocation.onProviderChange(_onProviderChange);
+    bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
+    bg.State state = await bg.BackgroundGeolocation.ready(bg.Config(
+      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 10.0,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      debug: true,
+      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+      reset: true,
+    ));
+
+    enabled.value = state.enabled;
+    isMoving.value = state.isMoving!;
+  }
+
+  void onClickEnable(bool enabled) async {
+    if (enabled) {
+      bg.State state = await bg.BackgroundGeolocation.start();
+      //enabled.value = state.enabled;
+      isMoving.value = state.isMoving!;
+    } else {
+      bg.State state = await bg.BackgroundGeolocation.stop();
+      bg.BackgroundGeolocation.setOdometer(0.0);
+      odometer.value = '0.0';
+      //enabled.value = state.enabled;
+      isMoving.value = state.isMoving!;
+    }
+  }
+
+  void onClickChangePace() {
+    isMoving.value = !isMoving.value;
+    bg.BackgroundGeolocation.changePace(isMoving.value).then((bool isMoving) {
+      print('[changePace] success $isMoving');
+    }).catchError((e) {
+      print('[changePace] ERROR: ' + e.code.toString());
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    BackgroundService.setToBackground(); // အသစ်က ဒီမှာခေါ်
+  void onClickGetCurrentPosition() {
+    bg.BackgroundGeolocation.getCurrentPosition(
+      persist: false,
+      desiredAccuracy: 0,
+      timeout: 30000,
+      samples: 3,
+    ).then((bg.Location location) {
+      print('[getCurrentPosition] - $location');
+    }).catchError((error) {
+      print('[getCurrentPosition] ERROR: $error');
+    });
   }
+
+  void _onLocation(bg.Location location) {
+    String odometerKM = (location.odometer / 1000.0).toStringAsFixed(1);
+    content.value = JsonEncoder.withIndent("     ").convert(location.toMap());
+    odometer.value = odometerKM;
+  }
+
+  void _onMotionChange(bg.Location location) {
+    print('[motionchange] - $location');
+  }
+
+  void _onActivityChange(bg.ActivityChangeEvent event) {
+    print('[activitychange] - $event');
+    motionActivity.value = event.activity;
+  }
+
+  void _onProviderChange(bg.ProviderChangeEvent event) {
+    print('$event');
+    content.value = JsonEncoder.withIndent("     ").convert(event.toMap());
+  }
+
+  void _onConnectivityChange(bg.ConnectivityChangeEvent event) {
+    print('$event');
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  final HomeController controller = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-
-        title: Text(widget.title),
+        title: const Text('Background Geolocation'),
+        actions: <Widget>[
+          Obx(() => Switch(
+            value: controller.enabled.value,
+            onChanged: controller.onClickEnable,
+          )),
+        ],
       ),
-      body: Center(
-        child: Column(
-
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
+      body: SingleChildScrollView(child: Obx(() => Text('${controller.content.value}'))),
+      bottomNavigationBar: BottomAppBar(
+        child: Container(
+          padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Text(
-                'You have pushed the button this many times:',
+              IconButton(
+                icon: Icon(Icons.gps_fixed),
+                onPressed: controller.onClickGetCurrentPosition,
               ),
-              Text(
-                '$_counter',
-                style: Theme.of(context).textTheme.headlineMedium,
+              Obx(() => Text('${controller.motionActivity.value} · ${controller.odometer.value} km')),
+              MaterialButton(
+                minWidth: 50.0,
+                child: Obx(() => Icon(controller.isMoving.value ? Icons.pause : Icons.play_arrow, color: Colors.white)),
+                color: controller.isMoving.value ? Colors.red : Colors.green,
+                onPressed: controller.onClickChangePace,
               ),
-
-              ElevatedButton(
-                onPressed: () => context.go('/details'),
-                child: const Text('Details screen'),
-              ),
-
-              ElevatedButton(onPressed: (){
-                context.go('/about');
-              }, child: Text("About")),
-
-              ElevatedButton(
-                onPressed: () async {
-                  context.go('/location');
-                  //await requestLocationPermission(context);
-                  },
-                child: const Text('Location'),
-              ),
-
             ],
           ),
+        ),
       ),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
-
-
-
-Future<void> initializeNotifications() async {
-  // Initialize the plugin
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
-
-  // Android initialization
-  final AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('@mipmap/launcher_icon');
-
-  // iOS initialization
-  final DarwinInitializationSettings initializationSettingsIOS =
-  DarwinInitializationSettings();
-
-  // Initialization settings for both platforms
-  final InitializationSettings initializationSettings =
-  InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
-
-  // Initialize the plugin with the initialization settings
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-}
-
-void requestLocationPermission() async {
-  LocationPermission lp = await Geolocator.checkPermission();
-  if(lp == LocationPermission.always){
-    //initializeService();
-  }else{
-    await Geolocator.requestPermission();
-    requestLocationPermission();
-  }
-}
-
-/// starting Background Service lib
-// Future<void> initializeService() async {
-//   final service = FlutterBackgroundService();
-//   await service.configure(
-//     androidConfiguration: AndroidConfiguration(
-//       onStart: onStart,
-//       autoStart: true,
-//       isForegroundMode: true,
-//       autoStartOnBoot: true,
-//     ),
-//     iosConfiguration: IosConfiguration(
-//       autoStart: true,
-//       onForeground: onIosStart,
-//       onBackground: onIosBackground,
-//     ),
-//   );
-//   service.startService();
-//   if(Platform.isIOS){
-//     backgroundFetchScheduleTask();
-//   }
-// }

@@ -11,7 +11,7 @@ final router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const MyHomePage(title: 'Demo Home Page'),
+      builder: (context, state) => MyHomePage(),
       routes: <RouteBase>[
         GoRoute(
           path: 'details',

@@ -11,6 +11,9 @@ PODS:
     - Firebase/Firestore (= 10.24.0)
     - firebase_core
     - Flutter
+  - CocoaLumberjack (3.8.5):
+    - CocoaLumberjack/Core (= 3.8.5)
+  - CocoaLumberjack/Core (3.8.5)
   - Firebase/Auth (10.24.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 10.24.0)
@@ -65,6 +68,9 @@ PODS:
     - nanopb (< 2.30911.0, >= 2.30908.0)
   - FirebaseSharedSwift (10.24.0)
   - Flutter (1.0.0)
+  - flutter_background_geolocation (4.15.2):
+    - CocoaLumberjack (~> 3.8.5)
+    - Flutter
   - flutter_background_service_ios (0.0.3):
     - Flutter
   - flutter_local_notifications (0.0.1):
@@ -131,6 +137,7 @@ DEPENDENCIES:
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - FirebaseFirestore (from `https://github.com/invertase/firestore-ios-sdk-frameworks.git`, tag `10.24.0`)
   - Flutter (from `Flutter`)
+  - flutter_background_geolocation (from `.symlinks/plugins/flutter_background_geolocation/ios`)
   - flutter_background_service_ios (from `.symlinks/plugins/flutter_background_service_ios/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
@@ -141,6 +148,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
+    - CocoaLumberjack
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -177,6 +185,8 @@ EXTERNAL SOURCES:
     :tag: 10.24.0
   Flutter:
     :path: Flutter
+  flutter_background_geolocation:
+    :path: ".symlinks/plugins/flutter_background_geolocation/ios"
   flutter_background_service_ios:
     :path: ".symlinks/plugins/flutter_background_service_ios/ios"
   flutter_local_notifications:
@@ -199,6 +209,7 @@ SPEC CHECKSUMS:
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
   background_fetch: b431f622572a9aa6f5e84553bc2540806de7889d
   cloud_firestore: a291c7ca0e498f9b08bbabd47a2499a5ae02c152
+  CocoaLumberjack: 6a459bc897d6d80bd1b8c78482ec7ad05dffc3f0
   Firebase: 91fefd38712feb9186ea8996af6cbdef41473442
   firebase_auth: b782567cafd5cfd64debf54638a9f29b63abd7bf
   firebase_core: 7f1e1156934d0da3be260174812842df9420e4ab
@@ -216,6 +227,7 @@ SPEC CHECKSUMS:
   FirebaseFirestoreInternalBinary: 264bc7678c6df6581477b139a216f6b3340efb64
   FirebaseSharedSwift: 76e1529c32101d80e4f1ca2fba7c39d59f0a390a
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_background_geolocation: 4be4497d442f388e6426fe9da4e19355593b84d5
   flutter_background_service_ios: e30e0d3ee69e4cee66272d0c78eacd48c2e94aac
   flutter_local_notifications: 4cde75091f6327eb8517fa068a0a5950212d2086
   geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
