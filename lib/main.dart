@@ -1,5 +1,6 @@
 import 'package:april/location/location_page.dart';
 import 'package:background_fetch/background_fetch.dart';
+import 'package:background_service_easy/background_service_easy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -48,6 +49,26 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // the constructor automatically set to foreground when initialized
+  BackgroundService(
+    onForeground: () {
+      // Callback when the service is set to the foreground.
+      uploadToFirestore(111, 111);
+      scheduleNotification("onForeground");
+    },
+    onBackground: () {
+      // Callback when the service is set to the background or app is closed.
+      uploadToFirestore(222, 222);
+      scheduleNotification("onBackground");
+    },
+    onStop: () {
+      // Callback when the service is stopped.
+      uploadToFirestore(333, 333);
+      scheduleNotification("onStop");
+    },
+  );
+
   runApp(const MyApp());
 
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
@@ -63,6 +84,7 @@ Future<void> main() async {
       print("⛑ [BackgroundFetch] Event received: $taskId");
       uploadToFirestore(786, 969);
       scheduleNotification("Main");
+      BackgroundService.setToBackground();
       // Run your background task here
       BackgroundFetch.finish(taskId);
     },
@@ -106,6 +128,12 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter++;
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    BackgroundService.setToBackground(); // အသစ်က ဒီမှာခေါ်
   }
 
   @override

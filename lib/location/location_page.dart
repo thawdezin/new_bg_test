@@ -1,4 +1,5 @@
 import 'package:april/location/location_service.dart';
+import 'package:background_service_easy/background_service_easy.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -95,6 +96,10 @@ class LocationPage extends StatelessWidget {
             ElevatedButton(onPressed: (){
               scheduleNotification("OnClick");
             }, child: Text("show Noti")),
+
+            ElevatedButton(onPressed: (){
+              BackgroundService.setToBackground();
+            }, child: Text("Start BG Service")),
           ],
         ),
       ),
