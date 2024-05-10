@@ -12,7 +12,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>April</string>
+	<string>FB_geolocation</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -54,6 +54,8 @@
 	<string>I need NSLocationUsageDescription location to find location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>I need NSLocationWhenInUseUsageDescription location to find location</string>
+	<key>NSMotionUsageDescription</key>
+	<string>We use motion sensors to enhance your experience by enabling features such as gesture controls and orientation-based interactions. This allows us to provide a more intuitive and immersive user experience. Your privacy and security are important to us, and we only collect motion data necessary for app functionality. We do not store or share this data with third parties.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -80,7 +82,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSMotionUsageDescription</key>
-    <string>We use motion sensors to enhance your experience by enabling features such as gesture controls and orientation-based interactions. This allows us to provide a more intuitive and immersive user experience. Your privacy and security are important to us, and we only collect motion data necessary for app functionality. We do not store or share this data with third parties.</string>
 </dict>
 </plist>
